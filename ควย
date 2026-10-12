@@ -1,0 +1,69 @@
+-- Auto Farm Script for ดวลมีดสีแดง (RED KNIFE DUEL)
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Window = Library.CreateLib("ดวลมีดสีแดง | Auto Farm Hub", "DarkTheme")
+
+-- ==================== AUTO FARM TAB ====================
+local FarmTab = Window:NewTab("ฟาร์มอัตโนมัติ")
+local FarmSection = FarmTab:NewSection("ระบบ Auto Farm")
+
+-- ปุ่มเปิด-ปิด Auto Farm Kill
+FarmSection:NewToggle("เปิด/ปิด Auto Farm Kill", "วาร์ปไปหลังผู้เล่นอื่นแล้วกดฟันให้อัตโนมัติ", function(state)
+    getgenv().AutoFarmKill = state
+    
+    task.spawn(function()
+        while getgenv().AutoFarmKill do
+            task.wait(0.1)
+            pcall(function()
+                local LocalPlayer = game.Players.LocalPlayer
+                local Character = LocalPlayer.Character
+                
+                -- วนหาผู้เล่นคนอื่นที่ไม่ใช่ตัวเอง
+                for _, target in pairs(game.Players:GetPlayers()) do
+                    if target ~= LocalPlayer and target.Character and target.Character:FindFirstChild("Humanoid") and target.Character.Humanoid.Health > 0 then
+                        
+                        -- ตรวจสอบและถือมีด
+                        local tool = LocalPlayer.Backpack:FindFirstChildOfClass("Tool") or Character:FindFirstChildOfClass("Tool")
+                        if tool and tool.Parent ~= Character then
+                            Character.Humanoid:EquipTool(tool)
+                        end
+                        
+                        -- วาร์ปไปอยู่ข้างหลังเป้าหมาย (ระยะห่าง 3 หน่วย)
+                        if Character:FindFirstChild("HumanoidRootPart") and target.Character:FindFirstChild("HumanoidRootPart") then
+                            Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+                            
+                            -- กดฟันมีด
+                            local currentTool = Character:FindFirstChildOfClass("Tool")
+                            if currentTool then
+                                currentTool:Activate()
+                            end
+                        end
+                        
+                        task.wait(0.2) -- เว้นระยะเวลาการโจมตี
+                    end
+                end
+            end)
+        end
+    end)
+end)
+
+-- ==================== MISC TAB ====================
+local MiscTab = Window:NewTab("ตั้งค่าเพิ่มเติม")
+local MiscSection = MiscTab:NewSection("ระบบป้องกันและผู้เล่น")
+
+-- ปรับ WalkSpeed
+MiscSection:NewSlider("ความเร็วการเดิน (Speed)", "ปรับความเร็วผู้เล่น", 300, 16, function(s)
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = s
+end)
+
+-- ลบขอบเขต/กำแพง
+MiscSection:NewButton("Noclip (เดินทะลุสิ่งกีดขวาง)", "ช่วยให้เดินทะลุกำแพงได้", function()
+    game:GetService("RunService").Stepped:Connect(function()
+        if game.Players.LocalPlayer.Character then
+            for _, part in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end)
+end)
